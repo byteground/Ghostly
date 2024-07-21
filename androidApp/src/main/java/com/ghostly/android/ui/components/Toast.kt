@@ -24,6 +24,8 @@ fun Toast(message: PostUiMessage?) {
     }
 
     LaunchedEffect(message) {
-        context.toast(messageTextId)
+        if (messageTextId != -1) {
+            context.toast(messageTextId)
+        }
     }
 }

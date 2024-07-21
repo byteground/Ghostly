@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.config.JvmTarget
+
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.kotlinCocoapods)
@@ -10,11 +12,14 @@ plugins {
 kotlin {
     androidTarget {
         compilations.all {
-            kotlinOptions {
-                jvmTarget = "11"
+            kotlin {
+                compilerOptions {
+                    jvm("17")
+                }
             }
         }
     }
+
     iosX64()
     iosArm64()
     iosSimulatorArm64()
@@ -66,8 +71,14 @@ android {
         minSdk = 29
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    kotlin {
+        compilerOptions {
+            jvm("17")
+        }
     }
 }
 

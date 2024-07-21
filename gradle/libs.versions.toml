@@ -5,9 +5,8 @@ coreSplashscreen = "1.0.1"
 datastorePreferences = "1.1.1"
 jjwtApi = "0.12.6"
 koin = "3.5.3"
-kotlin = "1.9.23"
+kotlin = "2.0.0"
 compose = "1.6.8"
-compose-compiler = "1.5.13"
 compose-material3 = "1.2.1"
 androidx-activityCompose = "1.9.0"
 kotlinxSerializationJson = "1.6.3"
@@ -18,11 +17,10 @@ materialIconsExtended = "1.6.8"
 navigationCompose = "2.8.0-beta05"
 richeditorCompose = "1.0.0-rc05"
 ktor = "2.3.8"
-sl4j = "1.7.36"
 uiTooling = "1.6.8"
 pagingCommonAndroid = "3.3.0"
 androidxRoom = "2.7.0-alpha05"
-ksp = "1.9.23-1.0.19"
+ksp = "2.0.0-1.0.22"
 sqlite = "2.5.0-alpha05"
 cashPaging = "3.3.0-alpha02-0.5.1"
 
@@ -62,7 +60,6 @@ sqlite-bundled = { module = "androidx.sqlite:sqlite-bundled", version.ref = "sql
 sqlite = { module = "androidx.sqlite:sqlite", version.ref = "sqlite" }
 ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
 ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" }
-sl4j-android = { module = "org.slf4j:slf4j-android", version.ref = "sl4j" }
 androidx-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling", version.ref = "uiTooling" }
 androidx-paging-common-android = { group = "androidx.paging", name = "paging-common-android", version.ref = "pagingCommonAndroid" }
 
@@ -75,3 +72,4 @@ kotlinCocoapods = { id = "org.jetbrains.kotlin.native.cocoapods", version.ref = 
 kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 room = { id = "androidx.room", version.ref = "androidxRoom" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }

@@ -9,9 +9,11 @@ import com.ghostly.posts.models.PostsResponse
 import com.ghostly.posts.models.UpdateRequestWrapper
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.parameter
+import io.ktor.client.request.post
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
@@ -28,6 +30,18 @@ interface ApiService {
     suspend fun getPosts(page: Int, pageSize: Int): Result<PostsResponse>
     suspend fun getSiteDetails(url: String): Result<SiteResponse>
     suspend fun publishPost(postId: String, request: UpdateRequestWrapper): Result<PostsResponse>
+
+    suspend fun <T> get(
+        endpoint: Endpoint,
+        getBody: suspend (HttpResponse) -> T,
+        block: HttpRequestBuilder.() -> Unit = {},
+    ): Result<T>
+
+    suspend fun <T> post(
+        endpoint: Endpoint,
+        getBody: suspend (HttpResponse) -> T,
+        block: HttpRequestBuilder.() -> Unit = {},
+    ): Result<T>
 }
 
 class ApiServiceImpl(
@@ -42,6 +56,74 @@ class ApiServiceImpl(
 
     private suspend fun tryAndGetToken(): Token? {
         return tokenProvider.generateToken()
+    }
+
+    override suspend fun <T> get(
+        endpoint: Endpoint,
+        getBody: suspend (HttpResponse) -> T,
+        block: HttpRequestBuilder.() -> Unit,
+    ): Result<T> = withContext(Dispatchers.IO) {
+        val loginDetails =
+            getLoginDetails() ?: return@withContext Result.Error(-1, "Invalid Login Details")
+
+        val token =
+            tryAndGetToken() ?: return@withContext Result.Error(-1, "Unable to generate token")
+
+        val response: HttpResponse = client.get("${loginDetails.domainUrl}${endpoint.path}") {
+            block.invoke(this)
+            header("Authorization", "Ghost ${token.token}")
+        }
+
+        when {
+            response.status == HttpStatusCode.Unauthorized -> {
+                return@withContext Result.Error(
+                    HttpStatusCode.Unauthorized.value,
+                    "Invalid API Key"
+                )
+            }
+
+            response.status != HttpStatusCode.OK -> {
+                return@withContext Result.Error(response.status.value, response.bodyAsText())
+            }
+
+            else -> {
+                Result.Success(getBody(response))
+            }
+        }
+    }
+
+    override suspend fun <T> post(
+        endpoint: Endpoint,
+        getBody: suspend (HttpResponse) -> T,
+        block: HttpRequestBuilder.() -> Unit
+    ): Result<T> = withContext(Dispatchers.IO) {
+        val loginDetails =
+            getLoginDetails() ?: return@withContext Result.Error(-1, "Invalid Login Details")
+
+        val token =
+            tryAndGetToken() ?: return@withContext Result.Error(-1, "Unable to generate token")
+
+        val response: HttpResponse = client.post("${loginDetails.domainUrl}${endpoint.path}") {
+            block.invoke(this)
+            header("Authorization", "Ghost ${token.token}")
+        }
+
+        when {
+            response.status == HttpStatusCode.Unauthorized -> {
+                return@withContext Result.Error(
+                    HttpStatusCode.Unauthorized.value,
+                    "Invalid API Key"
+                )
+            }
+
+            response.status != HttpStatusCode.OK -> {
+                return@withContext Result.Error(response.status.value, response.bodyAsText())
+            }
+
+            else -> {
+                Result.Success(getBody(response))
+            }
+        }
     }
 
     override suspend fun getPosts(page: Int, pageSize: Int) = withContext(Dispatchers.IO) {

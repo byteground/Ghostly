@@ -26,6 +26,7 @@ import com.ghostly.posts.models.Post
 @Composable
 fun HomeScreen(
     onPostClick: (Post) -> Unit,
+    onStaffSettingsClicked: () -> Unit,
     onLogout: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -84,7 +85,12 @@ fun HomeScreen(
             modifier = Modifier.padding(innerPadding)
         ) {
             composable(Screen.Posts.route) { PostsScreen(onPostClick = onPostClick) }
-            composable(Screen.Settings.route) { SettingsScreen(onLogout = onLogout) }
+            composable(Screen.Settings.route) {
+                SettingsScreen(
+                    onLogout = onLogout,
+                    onStaffSettingsClicked = onStaffSettingsClicked,
+                )
+            }
         }
     }
 

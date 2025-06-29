@@ -8,11 +8,15 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ButtonElevation
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
+import androidx.compose.material3.FloatingActionButtonElevation
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -31,7 +35,7 @@ fun AccentButton(
     border: BorderStroke? = null,
     contentPadding: PaddingValues = ButtonDefaults.ContentPadding,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    content: @Composable RowScope.() -> Unit
+    content: @Composable RowScope.() -> Unit,
 ) {
     Button(
         onClick,
@@ -63,7 +67,7 @@ fun PrimaryButton(
     border: BorderStroke? = null,
     contentPadding: PaddingValues = ButtonDefaults.ContentPadding,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    content: @Composable RowScope.() -> Unit
+    content: @Composable RowScope.() -> Unit,
 ) {
     Button(
         onClick,
@@ -86,6 +90,32 @@ private fun defaultColors(): ButtonColors = ButtonDefaults.buttonColors(
     disabledContainerColor = MaterialTheme.colorScheme.secondaryContainer,
     disabledContentColor = MaterialTheme.colorScheme.inverseSurface
 )
+
+@Composable
+fun AccentedExtendedFloatingActionButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    shape: Shape = FloatingActionButtonDefaults.extendedFabShape,
+    containerColor: Color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.9f),
+    contentColor: Color = MaterialTheme.colorScheme.onPrimary,
+    elevation: FloatingActionButtonElevation = FloatingActionButtonDefaults.elevation(
+        defaultElevation = 2.dp
+    ),
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    content: @Composable RowScope.() -> Unit,
+) {
+    ExtendedFloatingActionButton(
+        onClick = onClick,
+        modifier = modifier,
+        shape = shape,
+        containerColor = containerColor,
+        contentColor = contentColor,
+        elevation = elevation,
+        interactionSource = interactionSource
+    ) {
+        content()
+    }
+}
 
 
 @Preview

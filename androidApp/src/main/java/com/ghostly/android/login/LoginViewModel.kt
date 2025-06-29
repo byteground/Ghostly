@@ -153,7 +153,7 @@ class LoginViewModel(
         reset()
     }
 
-    private fun reset() {
+    fun reset() {
         _siteDetails.value = null
         _uiState.value = LoginState.Start
         _domain.value = ""

@@ -11,6 +11,8 @@ import com.ghostly.posts.data.PostRepository
 import com.ghostly.posts.data.PostRepositoryImpl
 import com.ghostly.posts.data.EditPostUseCase
 import com.ghostly.posts.data.EditPostUseCaseImpl
+import com.ghostly.settings.data.SettingsRepository
+import com.ghostly.settings.data.SettingsRepositoryImpl
 import org.koin.dsl.module
 
 @OptIn(ExperimentalPagingApi::class)
@@ -20,6 +22,7 @@ private val ghostCommonModule = module {
     single<EditPostUseCase> { EditPostUseCaseImpl(get()) }
     single<GetPostsUseCase> { GetPostsUseCaseImpl(get()) }
     single { PostRemoteMediator(get(), get(), get(), get()) }
+    single<SettingsRepository> { SettingsRepositoryImpl(get()) }
 }
 
 val ghostCommonModules = listOf(daoModule, ghostCommonModule)

@@ -144,3 +144,6 @@ shared/src/commonMain/kotlin/com/ghostly/
 - **Paging**: 3.3.0-alpha02-0.5.1
 - **Minimum Android SDK**: 24
 - **Target Android SDK**: 34
+
+## Branch Naming Conventions
+- Use the branch name feature/<name> or fix/<name> or release/<name> format.

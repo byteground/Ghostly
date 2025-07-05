@@ -22,6 +22,7 @@ import androidx.compose.material.icons.automirrored.filled.Help
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButtonDefaults
@@ -50,6 +51,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
@@ -58,9 +60,11 @@ import com.ghostly.android.R
 import com.ghostly.android.ui.components.AccentButton
 import com.ghostly.android.ui.components.AccentedExtendedFloatingActionButton
 import com.ghostly.android.utils.isValidEmail
+import android.widget.Toast
 import com.ghostly.settings.models.Invite
 import com.ghostly.settings.models.Role
 import com.ghostly.settings.models.User
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 
@@ -78,21 +82,27 @@ fun StaffSettingsScreen(
     var emailError by remember { mutableStateOf<String?>(null) }
     var isEmailTouched by remember { mutableStateOf(false) }
 
-    LaunchedEffect(Unit) {
-        viewModel.fetchUsers()
-        viewModel.fetchRoles()
-    }
-
     val users by viewModel.users.collectAsState()
-    val roles by viewModel.roles.collectAsState()
 
     var selectedRole by remember {
         mutableStateOf<Role?>(null)
     }
 
-    LaunchedEffect(roles) {
-        if (selectedRole == null) {
-            selectedRole = roles.firstOrNull()
+    LaunchedEffect(Unit) {
+        viewModel.fetchRoles()
+        viewModel.fetchUsers()
+    }
+    
+    // Collect toast messages
+    LaunchedEffect(Unit) {
+        viewModel.toastMessage.collect { message ->
+            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+        }
+    }
+
+    LaunchedEffect(users) {
+        if (selectedRole == null && users.isNotEmpty()) {
+            selectedRole = users.keys.firstOrNull()
         }
     }
 
@@ -137,28 +147,48 @@ fun StaffSettingsScreen(
         },
         floatingActionButtonPosition = FabPosition.Center,
     ) { paddingValues ->
+        val isLoading = remember { mutableStateOf(true) }
 
-        if (users.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-            ) {
-                Text(
-                    text = "No users yet",
-                    style = MaterialTheme.typography.titleMedium
-                )
+        LaunchedEffect(users) {
+            if (users.isNotEmpty()) {
+                isLoading.value = false
             }
-        } else {
-            UsersScreen(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                roles = roles,
-                users = users,
-            )
         }
 
+        when {
+            isLoading.value -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            }
+            users.isEmpty() -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "No users yet",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                }
+            }
+            else -> {
+                UsersScreen(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    roles = users.keys.toList(),
+                    users = users,
+                )
+            }
+        }
     }
     if (showInviteDialog) {
         AlertDialog(
@@ -199,7 +229,7 @@ fun StaffSettingsScreen(
                     )
 
                     Column {
-                        roles.forEach { role ->
+                        users.keys.forEach { role ->
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -234,13 +264,18 @@ fun StaffSettingsScreen(
                     onClick = {
                         selectedRole?.let {
                             scope.launch {
-                                viewModel.inviteStaff(
+                                val success = viewModel.inviteStaff(
                                     Invite(
                                         email = email,
                                         roleId = it.id
                                     )
                                 )
-                                showInviteDialog = false
+                                if (success) {
+                                    showInviteDialog = false
+                                    email = ""
+                                    isEmailTouched = false
+                                    emailError = null
+                                }
                             }
                         }
                     },
@@ -292,26 +327,6 @@ fun UserCard(
                 )
             }
         }
-
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            TextButton(
-                onClick = onRevoke,
-                colors = ButtonDefaults.textButtonColors(
-                    contentColor = MaterialTheme.colorScheme.error
-                )
-            ) {
-                Text("Revoke")
-            }
-
-            TextButton(
-                onClick = onResend,
-                colors = ButtonDefaults.textButtonColors(
-                    contentColor = MaterialTheme.colorScheme.primary
-                )
-            ) {
-                Text("Resend")
-            }
-        }
     }
 }
 
@@ -335,7 +350,7 @@ private fun CircleAvatar(
     }
 }
 
-@Preview
+@Preview(showBackground = true)
 @Composable
 private fun PreviewUserCard() {
     UserCard(
@@ -388,7 +403,7 @@ fun UsersScreen(
             pageSpacing = 8.dp,
             modifier = Modifier.weight(1f)
         ) { page ->
-            users[roles[page]]?.let { users ->
+            users[roles[page]]?.takeIf { it.isNotEmpty() }?.let { users ->
                 LazyColumn(
                     modifier = Modifier.fillMaxSize()
                 ) {
@@ -400,9 +415,12 @@ fun UsersScreen(
                     }
                 }
             } ?: Box(Modifier.fillMaxSize()) {
-                Text(text = "No users")
+                Text(
+                    modifier = Modifier.align(Alignment.Center),
+                    text = "No users",
+                    style = MaterialTheme.typography.bodyLarge
+                )
             }
-
         }
     }
 }

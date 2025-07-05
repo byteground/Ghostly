@@ -8,7 +8,9 @@ import com.ghostly.settings.models.InviteRequestWrapper
 import com.ghostly.settings.models.RolesResponse
 import com.ghostly.settings.models.UsersResponse
 import io.ktor.client.call.body
+import io.ktor.client.request.header
 import io.ktor.client.request.setBody
+import io.ktor.http.ContentType
 
 interface SettingsRepository {
 
@@ -41,6 +43,7 @@ internal class SettingsRepositoryImpl(
             endpoint = Endpoint.INVITE_USER,
             getBody = { it.body<String>() }
         ) {
+            header("Content-Type", ContentType.Application.Json)
             setBody(InviteRequestWrapper(invites))
         }
     }

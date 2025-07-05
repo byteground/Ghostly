@@ -13,3 +13,8 @@ data class Role(
 data class RolesResponse(
     val roles: List<Role>
 )
+
+data class UsersAndRoles(
+    val role: Role,
+    val users: List<User>,
+)

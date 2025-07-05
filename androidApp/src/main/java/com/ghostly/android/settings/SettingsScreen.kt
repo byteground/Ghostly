@@ -15,6 +15,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.SupervisedUserCircle
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -42,6 +45,7 @@ import androidx.compose.ui.window.Dialog
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.ghostly.android.R
+import com.ghostly.android.login.LoginViewModel
 import com.ghostly.android.ui.components.versionName
 import com.ghostly.android.utils.capitalize
 import kotlinx.coroutines.launch
@@ -50,7 +54,9 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun SettingsScreen(
     viewModel: SettingsViewModel = koinViewModel(),
+    loginViewModel: LoginViewModel = koinViewModel(),
     onLogout: () -> Unit,
+    onStaffSettingsClicked: () -> Unit,
 ) {
     val storeName by viewModel.storeName.collectAsState()
     val storeIcon by viewModel.storeIcon.collectAsState()
@@ -94,7 +100,16 @@ fun SettingsScreen(
                 )
             }
             Spacer(modifier = Modifier.height(80.dp))
-            PreferenceItem(name = R.string.pref_logout) {
+            PreferenceItem(
+                icon = Icons.Filled.SupervisedUserCircle,
+                name = stringResource(R.string.manage_staff)
+            ) {
+                onStaffSettingsClicked.invoke()
+            }
+            PreferenceItem(
+                icon = Icons.AutoMirrored.Filled.Logout,
+                name = stringResource(R.string.pref_logout)
+            ) {
                 showConfirmLogoutDialog.value = true
             }
             Spacer(modifier = Modifier.weight(1f))
@@ -116,6 +131,7 @@ fun SettingsScreen(
                 showConfirmLogoutDialog.value = false
                 showLogoutDialog.value = true
                 viewModel.clearLogin()
+                loginViewModel.reset()
                 showLogoutDialog.value = false
                 onLogout.invoke()
             }

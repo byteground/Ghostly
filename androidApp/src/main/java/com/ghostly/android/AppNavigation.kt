@@ -1,6 +1,7 @@
 package com.ghostly.android
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -9,6 +10,7 @@ import com.ghostly.android.home.HomeScreen
 import com.ghostly.android.login.ui.LoginScreen
 import com.ghostly.android.posts.NavigationMaps
 import com.ghostly.android.posts.ui.PostDetailScreen
+import com.ghostly.android.settings.StaffSettingsScreen
 import com.ghostly.database.entities.PostWithAuthorsAndTags
 import com.ghostly.posts.models.Post
 import kotlinx.serialization.Serializable
@@ -20,6 +22,9 @@ object Destination {
 
     @Serializable
     data class Login(val userLoggedOut: Boolean = false)
+
+    @Serializable
+    object StaffSettings
 }
 
 @Composable
@@ -58,7 +63,15 @@ fun AppNavigation(
                             inclusive = true
                         }
                     }
+                },
+                onStaffSettingsClicked = {
+                    navController.navigate(Destination.StaffSettings)
                 }
+            )
+        }
+        composable<Destination.StaffSettings> {
+            StaffSettingsScreen(
+                navController = navController
             )
         }
     }

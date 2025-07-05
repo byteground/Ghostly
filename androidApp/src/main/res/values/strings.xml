@@ -43,4 +43,12 @@
     <string name="unpublished_successfully">Unpublished Successfully</string>
     <string name="unpublishing_failed">Unpublishing Failed</string>
     <string name="unpublishing_failed_unauthorized">Unpublishing Failed. Unauthorized</string>
+    <string name="staff">Staff</string>
+    <string name="manage_staff">Manage Staff</string>
+    <string name="invite_a_new_staff_user">Invite a new staff user</string>
+    <string name="email_is_required">Email is required</string>
+    <string name="please_enter_a_valid_email_address">Please enter a valid email address</string>
+    <string name="email_address">Email address</string>
+    <string name="send_invitation">Send invitation</string>
+    <string name="invite_people">Invite People</string>
 </resources>

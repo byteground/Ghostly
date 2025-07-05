@@ -17,11 +17,52 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+
+@Composable
+fun PreferenceItem(
+    icon: ImageVector? = null,
+    @StringRes iconDesc: Int? = null,
+    name: String,
+    onClick: () -> Unit,
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+        modifier = Modifier
+            .clickable { onClick.invoke() }
+            .padding(vertical = 16.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            icon?.let {
+                Icon(
+                    icon,
+                    contentDescription = iconDesc?.let { stringResource(id = iconDesc) },
+                    modifier = Modifier
+                        .size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+            }
+            Text(
+                text = name,
+                style = MaterialTheme.typography.titleSmall,
+                textAlign = TextAlign.Start,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        Spacer(modifier = Modifier.weight(1.0f))
+        Icon(
+            Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+            tint = MaterialTheme.colorScheme.surfaceTint,
+            contentDescription = "Next"
+        )
+    }
+}
 
 @Composable
 fun PreferenceItem(

@@ -1,58 +1,39 @@
 package com.ghostly.android.settings
 
-import androidx.compose.foundation.background
+import android.content.Context
+import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Help
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.ScrollableTabRow
-import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.NavController
@@ -60,40 +41,30 @@ import com.ghostly.android.R
 import com.ghostly.android.ui.components.AccentButton
 import com.ghostly.android.ui.components.AccentedExtendedFloatingActionButton
 import com.ghostly.android.utils.isValidEmail
-import android.widget.Toast
 import com.ghostly.settings.models.Invite
 import com.ghostly.settings.models.Role
 import com.ghostly.settings.models.User
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StaffSettingsScreen(
     navController: NavController,
     viewModel: SettingsViewModel = koinViewModel(),
 ) {
-    val scope = rememberCoroutineScope()
     val context = LocalContext.current
-    var showInviteDialog by remember { mutableStateOf(false) }
-    var email by remember { mutableStateOf("") }
+    val showInviteDialog = remember { mutableStateOf(false) }
+    val email = remember { mutableStateOf("") }
 
-    var emailError by remember { mutableStateOf<String?>(null) }
-    var isEmailTouched by remember { mutableStateOf(false) }
+    val emailError = remember { mutableStateOf<String?>(null) }
+    val isEmailTouched = remember { mutableStateOf(false) }
 
     val users by viewModel.users.collectAsState()
 
-    var selectedRole by remember {
+    val selectedRole = remember {
         mutableStateOf<Role?>(null)
     }
 
-    LaunchedEffect(Unit) {
-        viewModel.fetchRoles()
-        viewModel.fetchUsers()
-    }
-    
-    // Collect toast messages
     LaunchedEffect(Unit) {
         viewModel.toastMessage.collect { message ->
             Toast.makeText(context, message, Toast.LENGTH_LONG).show()
@@ -101,343 +72,155 @@ fun StaffSettingsScreen(
     }
 
     LaunchedEffect(users) {
-        if (selectedRole == null && users.isNotEmpty()) {
-            selectedRole = users.keys.firstOrNull()
+        if (selectedRole.value == null && users.isNotEmpty()) {
+            selectedRole.value = users.keys.firstOrNull()
         }
     }
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Row(
-                        modifier = Modifier.height(54.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = stringResource(R.string.staff),
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                    }
-                },
-                navigationIcon = {
-                    IconButton(onClick = {
-                        navController.popBackStack()
-                    }) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.cd_back)
-                        )
-                    }
-                }
-            )
+            StaffScreenTopBar(navController = navController)
         },
         floatingActionButton = {
             AccentedExtendedFloatingActionButton(
-                onClick = { showInviteDialog = true },
+                onClick = { showInviteDialog.value = true },
                 shape = FloatingActionButtonDefaults.extendedFabShape,
             ) {
                 Icon(
                     imageVector = Icons.Default.Add,
-                    contentDescription = "Invite People"
+                    contentDescription = stringResource(R.string.invite_people)
                 )
-
                 Text(text = "Invite People")
             }
         },
         floatingActionButtonPosition = FabPosition.Center,
     ) { paddingValues ->
-        val isLoading = remember { mutableStateOf(true) }
-
-        LaunchedEffect(users) {
-            if (users.isNotEmpty()) {
-                isLoading.value = false
-            }
-        }
-
-        when {
-            isLoading.value -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
-            }
-            users.isEmpty() -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "No users yet",
-                        style = MaterialTheme.typography.titleMedium
-                    )
-                }
-            }
-            else -> {
-                UsersScreen(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
-                    roles = users.keys.toList(),
-                    users = users,
-                )
-            }
-        }
+        StaffListScreen(
+            paddingValues = paddingValues,
+            users = users,
+        )
     }
-    if (showInviteDialog) {
-        AlertDialog(
-            properties = DialogProperties(usePlatformDefaultWidth = false),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp),
-            onDismissRequest = { },
-            title = { Text(stringResource(R.string.invite_a_new_staff_user)) },
-            text = {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    OutlinedTextField(
-                        value = email,
-                        onValueChange = {
-                            email = it
-                            isEmailTouched = true
-                            emailError = when {
-                                it.isEmpty() -> context.getString(R.string.email_is_required)
-                                !isValidEmail(it) -> context.getString(R.string.please_enter_a_valid_email_address)
-                                else -> null
-                            }
-                        },
-                        label = { Text(stringResource(R.string.email_address)) },
-                        modifier = Modifier.fillMaxWidth(),
-                        isError = emailError != null && isEmailTouched,
-                        supportingText = {
-                            if (emailError != null && isEmailTouched) {
-                                Text(
-                                    text = emailError ?: "",
-                                    color = MaterialTheme.colorScheme.error
-                                )
-                            }
-                        },
-                        textStyle = MaterialTheme.typography.bodyLarge
-                    )
-
-                    Column {
-                        users.keys.forEach { role ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { selectedRole = role }
-                                    .padding(vertical = 4.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                RadioButton(
-                                    selected = selectedRole == role,
-                                    onClick = { selectedRole = role }
-                                )
-                                Text(
-                                    text = role.name.lowercase()
-                                        .replaceFirstChar { it.uppercase() },
-                                    style = MaterialTheme.typography.bodyLarge
-                                )
-                                Icon(
-                                    modifier = Modifier
-                                        .padding(start = 8.dp)
-                                        .size(16.dp)
-                                        .clickable { },
-                                    imageVector = Icons.AutoMirrored.Filled.Help,
-                                    contentDescription = ""
-                                )
-                            }
-                        }
-                    }
-                }
-            },
-            confirmButton = {
-                AccentButton(
-                    onClick = {
-                        selectedRole?.let {
-                            scope.launch {
-                                val success = viewModel.inviteStaff(
-                                    Invite(
-                                        email = email,
-                                        roleId = it.id
-                                    )
-                                )
-                                if (success) {
-                                    showInviteDialog = false
-                                    email = ""
-                                    isEmailTouched = false
-                                    emailError = null
-                                }
-                            }
-                        }
-                    },
-                    enabled = emailError == null && isEmailTouched
-                ) {
-                    Text(stringResource(R.string.send_invitation))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showInviteDialog = false }) {
-                    Text(stringResource(R.string.cancel))
-                }
-            }
+    if (showInviteDialog.value) {
+        InviteStaffDialog(
+            modifier = Modifier,
+            email = email,
+            isEmailTouched = isEmailTouched,
+            emailError = emailError,
+            context = context,
+            users = users,
+            selectedRole = selectedRole,
+            viewModel = viewModel,
+            showInviteDialog = showInviteDialog
         )
     }
 }
 
-
 @Composable
-fun UserCard(
+fun InviteStaffDialog(
     modifier: Modifier = Modifier,
-    user: User,
-    role: Role,
-    onRevoke: () -> Unit = {},
-    onResend: () -> Unit = {},
-) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            CircleAvatar(
-                text = user.email.first().toString(),
-                backgroundColor = MaterialTheme.colorScheme.primary
-            )
-
-            Column {
-                Text(user.email)
-                Text(
-                    text = role.name,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun CircleAvatar(
-    text: String,
-    backgroundColor: Color,
-) {
-    Box(
-        modifier = Modifier
-            .size(40.dp)
-            .clip(CircleShape)
-            .background(backgroundColor),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = text.uppercase(),
-            color = Color.White,
-            style = MaterialTheme.typography.titleMedium
-        )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun PreviewUserCard() {
-    UserCard(
-        user = User(
-            "1",
-            "User 1",
-            "user@example.com",
-            listOf(Role("1", "Contributor", "People who contribute"))
-        ),
-        role = Role("1", "Contributor", "People who contribute"),
-    )
-}
-
-@Composable
-fun UsersScreen(
-    modifier: Modifier = Modifier,
-    roles: List<Role>,
+    email: MutableState<String>,
+    isEmailTouched: MutableState<Boolean>,
+    emailError: MutableState<String?>,
+    context: Context,
     users: Map<Role, List<User>>,
+    selectedRole: MutableState<Role?>,
+    viewModel: SettingsViewModel,
+    showInviteDialog: MutableState<Boolean>,
 ) {
-    val pages = roles.map { it.name.replaceFirstChar { it.uppercase() } }
-    val pagerState = rememberPagerState(pageCount = { roles.size })
     val scope = rememberCoroutineScope()
 
-    Column(
-        modifier = modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        ScrollableTabRow(
-            selectedTabIndex = pagerState.currentPage,
-            edgePadding = 0.dp,
-        ) {
-            pages.forEachIndexed { index, title ->
-                Tab(
-                    selected = pagerState.currentPage == index,
-                    onClick = {
-                        scope.launch {
-                            pagerState.scrollToPage(index)
+    AlertDialog(
+        properties = DialogProperties(usePlatformDefaultWidth = false),
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp),
+        onDismissRequest = { },
+        title = { Text(stringResource(R.string.invite_a_new_staff_user)) },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                OutlinedTextField(
+                    value = email.value,
+                    onValueChange = {
+                        email.value = it
+                        isEmailTouched.value = true
+                        emailError.value = when {
+                            it.isEmpty() -> context.getString(R.string.email_is_required)
+                            !isValidEmail(it) -> context.getString(R.string.please_enter_a_valid_email_address)
+                            else -> null
                         }
                     },
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 12.dp),
-                    content = {
-                        Text(text = title)
-                    }
+                    label = { Text(stringResource(R.string.email_address)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    isError = emailError.value != null && isEmailTouched.value,
+                    supportingText = {
+                        if (emailError.value != null && isEmailTouched.value) {
+                            Text(
+                                text = emailError.value ?: "",
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    },
+                    textStyle = MaterialTheme.typography.bodyLarge
                 )
-            }
-        }
 
-        HorizontalPager(
-            state = pagerState,
-            pageSpacing = 8.dp,
-            modifier = Modifier.weight(1f)
-        ) { page ->
-            users[roles[page]]?.takeIf { it.isNotEmpty() }?.let { users ->
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    itemsIndexed(users) { _, user ->
-                        UserCard(
-                            user = user,
-                            role = roles[page],
-                        )
+                Column {
+                    users.keys.forEach { role ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { selectedRole.value = role }
+                                .padding(vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            RadioButton(
+                                selected = selectedRole.value == role,
+                                onClick = { selectedRole.value = role })
+                            Text(
+                                text = role.name.lowercase().replaceFirstChar { it.uppercase() },
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                            Icon(
+                                modifier = Modifier
+                                    .padding(start = 8.dp)
+                                    .size(16.dp)
+                                    .clickable { },
+                                imageVector = Icons.AutoMirrored.Filled.Help,
+                                contentDescription = ""
+                            )
+                        }
                     }
                 }
-            } ?: Box(Modifier.fillMaxSize()) {
-                Text(
-                    modifier = Modifier.align(Alignment.Center),
-                    text = "No users",
-                    style = MaterialTheme.typography.bodyLarge
-                )
             }
-        }
-    }
-}
-
-internal enum class StaffRole {
-    CONTRIBUTOR,
-    AUTHOR,
-    EDITOR,
-    ADMINISTRATOR
-}
-
-@Composable
-private fun getRoleDescription(role: StaffRole): String {
-    return when (role) {
-        StaffRole.CONTRIBUTOR -> "Can create and edit their own posts, but cannot publish. An Editor needs to approve and publish for them."
-        StaffRole.AUTHOR -> "A trusted user who can create, edit and publish their own posts, but can't modify others."
-        StaffRole.EDITOR -> "Can invite and manage other Authors and Contributors, as well as edit and publish any posts on the site."
-        StaffRole.ADMINISTRATOR -> "Trusted staff user who should be able to manage all content and users, as well as site settings and options."
-    }
+        },
+        confirmButton = {
+            AccentButton(
+                onClick = {
+                    selectedRole.value?.let { role ->
+                        scope.launch {
+                            val success = viewModel.inviteStaff(
+                                Invite(
+                                    email = email.value, roleId = role.id
+                                )
+                            )
+                            if (success) {
+                                showInviteDialog.value = false
+                                email.value = ""
+                                isEmailTouched.value = false
+                                emailError.value = null
+                            }
+                        }
+                    }
+                }, enabled = emailError.value == null && isEmailTouched.value
+            ) {
+                Text(stringResource(R.string.send_invitation))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = { showInviteDialog.value = false }) {
+                Text(stringResource(R.string.cancel))
+            }
+        })
 }

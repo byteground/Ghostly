@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class SiteDetails(
     val title: String,
-    val icon: String?,
+    val icon: String,
 )
 
 @Serializable

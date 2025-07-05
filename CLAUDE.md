@@ -3,82 +3,144 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project Overview
-Ghostly is a Kotlin Multiplatform (KMP) client for Ghost CMS, currently implementing an Android app with planned iOS support. Development happens on the `develop` branch.
 
-## Essential Commands
+Ghostly is a Kotlin Multiplatform Mobile (KMM) application that serves as a modern, read-only client for Ghost CMS. The project demonstrates an offline-first approach with local caching and pagination support.
 
-### Building
+## Commands
+
+### Build Commands
 ```bash
-# Full project build
-./gradlew build
+# Build Android app
+./gradlew :androidApp:assembleDebug
 
-# Android-specific builds
-./gradlew :androidApp:assembleDebug    # Debug APK
-./gradlew :androidApp:assembleRelease  # Release APK
-./gradlew :androidApp:installDebug     # Install on device/emulator
-```
+# Build shared module
+./gradlew :shared:build
 
-### Code Quality
-```bash
-# Lint checks (MUST pass before committing)
-./gradlew lint
-./gradlew lintFix                      # Apply safe fixes
-
-# Run tests
-./gradlew test
-./gradlew :androidApp:testDebugUnitTest
-./gradlew connectedAndroidTest         # Instrumentation tests
-```
-
-### Development Workflow
-```bash
-# Clean build artifacts
+# Clean build
 ./gradlew clean
 
-# List all available tasks
-./gradlew tasks
-
-# View project dependencies
-./gradlew dependencies
+# Sync iOS dependencies (run after shared module changes)
+cd iosApp && pod install
 ```
 
-## Architecture Overview
+### Development Commands
+```bash
+# Run Android app (requires Android Studio or connected device)
+./gradlew :androidApp:installDebug
 
-### Multi-Module Structure
-- **`/shared`**: KMP shared module containing business logic, data access, and networking
-  - `commonMain`: Cross-platform code (repositories, use cases, data models)
-  - `androidMain`: Android-specific implementations (DataStore, platform-specific networking)
-  - `iosMain`: iOS-specific implementations (placeholder for future)
-- **`/androidApp`**: Android UI layer using Jetpack Compose
-- **`/iosApp`**: iOS app structure (not yet implemented)
+# Generate database schema (after Room entity changes)
+./gradlew :shared:kspCommonMainKotlinMetadata
 
-### Key Architectural Patterns
-1. **MVVM with ViewModels**: Each screen has a ViewModel managing UI state
-2. **Repository Pattern**: Data access abstraction in shared module
-3. **Use Cases**: Business logic encapsulation (e.g., `GetPostsUseCase`, `EditPostUseCase`)
-4. **Dependency Injection**: Koin modules organize dependencies
-   - Module structure: `appModule` + `loginModule` + `postsModule` + `ghostCommonModules` + `androidModules`
+# Check for dependency updates
+./gradlew dependencyUpdates
+```
 
-### Data Flow
-1. **Network Layer**: Ktor client with JSON serialization
-2. **Local Storage**: Room database with DAOs for offline support
-3. **State Management**: Kotlin coroutines and Flow for reactive updates
-4. **Paging**: AndroidX Paging 3 with `RemoteMediator` for efficient list loading
+### Testing Commands
+**Note:** No testing infrastructure is currently configured. When implementing tests:
+- Use JUnit5 for unit tests
+- MockK for mocking
+- Turbine for testing Flows
+- Add test commands here once configured
 
-### Navigation
-- Compose Navigation with type-safe arguments using Kotlin Serialization
-- Centralized in `AppNavigation.kt` with sealed class `Destination`
+### Linting Commands
+**Note:** No linting tools are currently configured. Consider adding:
+- detekt for static analysis
+- ktlint for code formatting
 
-### Critical Integration Points
-- **Token Management**: `TokenProvider` interface with platform-specific implementations
-- **DataStore**: Platform-specific persistent storage for login credentials
-- **Database**: Room database shared across platforms with migrations support
+## Architecture
+
+The project follows **Clean Architecture** with clear separation of concerns:
+
+### Module Structure
+- `androidApp/` - Android-specific UI implementation using Jetpack Compose
+- `iosApp/` - iOS-specific implementation (SwiftUI - in progress)
+- `shared/` - Shared business logic, data layer, and models
+
+### Layer Architecture in Shared Module
+```
+shared/src/commonMain/kotlin/com/ghostly/
+├── database/          # Local persistence (Room)
+├── network/           # API communication (Ktor)
+├── models/           # Domain models
+├── repository/       # Data repositories
+├── login/            # Authentication feature
+├── home/             # Posts listing feature
+├── settings/         # User settings feature
+└── utils/            # Shared utilities
+```
+
+### Key Patterns
+1. **MVVM Pattern**: ViewModels in Android module manage UI state
+2. **Repository Pattern**: Abstracts data sources (network + database)
+3. **Offline-First**: Room database with RemoteMediator for caching
+4. **Dependency Injection**: Koin for DI configuration
+5. **Coroutines & Flow**: For async operations and reactive data streams
+
+### Important Implementation Details
+
+#### API Configuration
+- Base URL and credentials are stored in `SiteDetails` data class
+- API service uses Ktor with JSON serialization
+- Ghost Admin API integration with proper authentication headers
+
+#### Database Schema
+- Room database with entities for Posts, Users, Authors, Tags
+- RemoteKeys for pagination support
+- Proper foreign key relationships and indexes
+
+#### Pagination
+- Paging 3 library with RemoteMediator
+- Handles network/database synchronization
+- Page size of 15 posts
+
+#### State Management
+- UI states modeled as sealed classes (Loading, Success, Error)
+- SharedFlow for one-time events
+- StateFlow for UI state
+
+### Current Features
+- Ghost CMS authentication
+- Posts listing with offline support
+- Post detail view
+- User settings and staff management
+- Dark mode support
 
 ## Development Guidelines
-- All PRs must target `develop` branch
-- Kotlin official code style enforced
-- Compose UI patterns for Android
-- Platform-specific UI, shared business logic
 
-## Branch Naming Conventions
-- Use the branch name feature/<name> or fix/<name> or release/<name> format.
+### Code Style
+- Follow Kotlin coding conventions
+- Use meaningful variable and function names
+- Prefer composition over inheritance
+- Use extension functions for utility operations
+- Handle nullability explicitly
+
+### Adding New Features
+1. Create feature package in shared module
+2. Define models in `models/` subpackage
+3. Implement repository in `data/` subpackage
+4. Create ViewModel in Android module
+5. Build Compose UI in appropriate screen package
+
+### Making API Changes
+1. Update models in shared module
+2. Modify `ApiService` interface
+3. Update repository implementation
+4. Run database schema generation if entities change
+5. Test offline behavior
+
+### Common Pitfalls
+- Remember to handle offline scenarios in repositories
+- Use proper error handling with sealed classes
+- Test on both Android and iOS (when iOS is implemented)
+- Ensure proper ProGuard rules for release builds
+- Handle pagination edge cases (empty lists, errors)
+
+## Tech Stack Reference
+- **Kotlin**: 2.0.0
+- **Compose BOM**: 2024.06.00
+- **Ktor**: 2.3.11
+- **Room**: 2.7.0-alpha04
+- **Koin**: 3.5.6
+- **Paging**: 3.3.0-alpha02-0.5.1
+- **Minimum Android SDK**: 24
+- **Target Android SDK**: 34

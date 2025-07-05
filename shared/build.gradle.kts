@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.config.JvmTarget
-
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.kotlinCocoapods)
@@ -12,9 +10,9 @@ plugins {
 kotlin {
     androidTarget {
         compilations.all {
-            kotlin {
+            compileTaskProvider.configure {
                 compilerOptions {
-                    jvm("17")
+                    jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
                 }
             }
         }
@@ -75,11 +73,6 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    kotlin {
-        compilerOptions {
-            jvm("17")
-        }
-    }
 }
 
 dependencies {

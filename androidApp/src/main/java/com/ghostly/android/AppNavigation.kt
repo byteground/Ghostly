@@ -25,9 +25,6 @@ object Destination {
 
     @Serializable
     object StaffSettings
-
-    @Serializable
-    data class Dummy(val something: Boolean = false)
 }
 
 @Composable

@@ -45,7 +45,7 @@ fun Tags(
             val tagColor = remember(tag.name) { tagColors.random() }
             AssistChip(
                 modifier = Modifier
-                    .height(24.dp),
+                    .height(32.dp),
                 onClick = { /*TODO*/ },
                 label = {
                     Text(

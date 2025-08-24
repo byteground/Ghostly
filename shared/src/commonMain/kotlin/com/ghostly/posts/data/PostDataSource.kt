@@ -13,7 +13,7 @@ import com.ghostly.mappers.toPostEntity
 import com.ghostly.posts.models.Post
 
 interface PostDataSource {
-    suspend fun insertPosts(posts: List<Post>, clearFirst: Boolean)
+    suspend fun insertPosts(posts: List<Post>)
     suspend fun updatePost(post: Post)
     suspend fun refreshPosts(posts: List<Post>)
 }
@@ -25,22 +25,11 @@ class LocalPostDataSource(
     private val postAuthorCrossRefDao: PostAuthorCrossRefDao,
     private val postTagCrossRefDao: PostTagCrossRefDao,
 ) : PostDataSource {
-    override suspend fun insertPosts(posts: List<Post>, clearFirst: Boolean) {
-        if (clearFirst) {
-            // Clear all existing data first to ensure clean state
-            postDao.clearAll()
-            authorDao.clearAll()
-            tagDao.clearAll()
-            postAuthorCrossRefDao.clearAll()
-            postTagCrossRefDao.clearAll()
-        }
-        
-        // Insert posts
+    override suspend fun insertPosts(posts: List<Post>) {
         posts.map { it.toPostEntity() }.let {
             postDao.insertPosts(it)
         }
         
-        // Insert authors
         authorDao.insertAuthors(posts.flatMap {
             it.authors.map { author ->
                 AuthorEntity(
@@ -49,7 +38,6 @@ class LocalPostDataSource(
             }
         })
         
-        // Insert tags
         tagDao.insertTags(posts.flatMap {
             it.tags.mapNotNull { tag ->
                 tag.id?.let { id ->
@@ -60,7 +48,6 @@ class LocalPostDataSource(
             }
         })
         
-        // Insert author relationships
         postAuthorCrossRefDao.insertPostAuthorCrossRef(posts.flatMap { post ->
             post.authors.map { author ->
                 PostAuthorCrossRef(
@@ -69,7 +56,6 @@ class LocalPostDataSource(
             }
         })
         
-        // Insert tag relationships
         postTagCrossRefDao.insertPostTagCrossRef(posts.flatMap { post ->
             post.tags.mapNotNull { tag ->
                 tag.id?.let { id ->
@@ -84,7 +70,6 @@ class LocalPostDataSource(
     override suspend fun updatePost(post: Post) {
         postDao.updatePost(post.toPostEntity())
         
-        // Update authors
         authorDao.insertAuthors(
             post.authors.map { author ->
                 AuthorEntity(
@@ -93,7 +78,6 @@ class LocalPostDataSource(
             }
         )
         
-        // Update tags - first clear old relationships, then insert new ones
         tagDao.insertTags(post.tags.mapNotNull { tag ->
             tag.id?.let { id ->
                 TagEntity(
@@ -102,7 +86,6 @@ class LocalPostDataSource(
             }
         })
         
-        // Clear old post-tag relationships and insert new ones
         postTagCrossRefDao.clearPostTagCrossRefs(post.id)
         postTagCrossRefDao.insertPostTagCrossRef(
             post.tags.mapNotNull { tag ->
@@ -114,7 +97,6 @@ class LocalPostDataSource(
             }
         )
         
-        // Update author relationships
         postAuthorCrossRefDao.insertPostAuthorCrossRef(
             post.authors.map { author ->
                 PostAuthorCrossRef(
@@ -125,12 +107,10 @@ class LocalPostDataSource(
     }
     
     override suspend fun refreshPosts(posts: List<Post>) {
-        // Insert/update posts without clearing everything
         posts.map { it.toPostEntity() }.let {
             postDao.insertPosts(it)
         }
         
-        // Insert/update authors
         authorDao.insertAuthors(posts.flatMap {
             it.authors.map { author ->
                 AuthorEntity(
@@ -139,7 +119,6 @@ class LocalPostDataSource(
             }
         })
         
-        // Insert/update tags
         tagDao.insertTags(posts.flatMap {
             it.tags.mapNotNull { tag ->
                 tag.id?.let { id ->
@@ -150,7 +129,6 @@ class LocalPostDataSource(
             }
         })
         
-        // Update author relationships
         postAuthorCrossRefDao.insertPostAuthorCrossRef(posts.flatMap { post ->
             post.authors.map { author ->
                 PostAuthorCrossRef(
@@ -159,7 +137,6 @@ class LocalPostDataSource(
             }
         })
         
-        // Update tag relationships
         posts.forEach { post ->
             postTagCrossRefDao.clearPostTagCrossRefs(post.id)
             postTagCrossRefDao.insertPostTagCrossRef(

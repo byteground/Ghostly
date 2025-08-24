@@ -1,6 +1,6 @@
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
-    // alias(libs.plugins.kotlinCocoapods)
+    alias(libs.plugins.kotlinCocoapods)
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.room)
     id("com.google.devtools.ksp")
@@ -78,9 +78,9 @@ android {
 
 dependencies {
     add("kspAndroid", libs.androidx.room.compiler)
-    // add("kspIosSimulatorArm64", libs.androidx.room.compiler)
-    // add("kspIosX64", libs.androidx.room.compiler)
-    // add("kspIosArm64", libs.androidx.room.compiler)
+    add("kspIosSimulatorArm64", libs.androidx.room.compiler)
+    add("kspIosX64", libs.androidx.room.compiler)
+    add("kspIosArm64", libs.androidx.room.compiler)
     debugImplementation(libs.compose.ui.tooling)
 }
 

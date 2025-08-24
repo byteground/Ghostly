@@ -49,18 +49,14 @@ class PostRemoteMediator(
         }
 
         return try {
-            println("PostRemoteMediator: Loading data for page $page, loadType: $loadType")
             when (val postResult = apiService.getPosts(page, state.config.pageSize)) {
                 is Result.Success -> {
-                    println("PostRemoteMediator: API call successful")
-                    // Clear remote keys for refresh operations
                     if (loadType == LoadType.REFRESH) {
-                        println("PostRemoteMediator: Clearing remote keys for refresh")
                         remoteKeysDao.clearRemoteKeys()
+                        postDao.clearAll()
                     }
-                    
+
                     val posts = postResult.data?.posts ?: emptyList()
-                    println("PostRemoteMediator: Received ${posts.size} posts from API")
 
                     val endOfPaginationReached = posts.isEmpty()
 
@@ -72,49 +68,29 @@ class PostRemoteMediator(
                         )
                     }
 
-                    // Use PostDataSource.refreshPosts for intelligent updates
-                    println("PostRemoteMediator: Inserting ${posts.size} posts into database")
-                    if (loadType == LoadType.REFRESH) {
-                        // For refresh, clear remote keys but use intelligent post updates
-                        remoteKeysDao.clearRemoteKeys()
-                        postDataSource.refreshPosts(posts)
-                    } else {
-                        // For append/prepend, just add new posts
-                        postDataSource.insertPosts(posts, clearFirst = false)
-                    }
+                    postDataSource.insertPosts(posts)
                     remoteKeysDao.insertAll(remoteKeys)
-                    println("PostRemoteMediator: Successfully inserted posts and remote keys")
                     MediatorResult.Success(endOfPaginationReached = endOfPaginationReached)
                 }
 
                 is Result.Error -> {
-                    println("PostRemoteMediator: API call failed: ${postResult.errorCode} - ${postResult.message}")
                     MediatorResult.Error(RuntimeException("${postResult.errorCode}: ${postResult.message}"))
                 }
             }
 
         } catch (e: Exception) {
-            println("PostRemoteMediator: Exception during load: ${e.message}")
             MediatorResult.Error(e)
         }
     }
 
     override suspend fun initialize(): InitializeAction {
-        val cacheTimeout = 1.toDuration(DurationUnit.MINUTES).inWholeMilliseconds // Reduced to 1 minute for testing
+        val cacheTimeout = 1.toDuration(DurationUnit.HOURS).inWholeMilliseconds
 
-        val shouldSkip = Clock.System.now().toEpochMilliseconds() - (remoteKeysDao.getCreationTime()
+        return if (Clock.System.now().toEpochMilliseconds() - (remoteKeysDao.getCreationTime()
                 ?: 0) < cacheTimeout
-        
-        println("PostRemoteMediator: Cache timeout: $cacheTimeout ms")
-        println("PostRemoteMediator: Last creation time: ${remoteKeysDao.getCreationTime()}")
-        println("PostRemoteMediator: Current time: ${Clock.System.now().toEpochMilliseconds()}")
-        println("PostRemoteMediator: Should skip initial refresh: $shouldSkip")
-        
-        return if (shouldSkip) {
-            println("PostRemoteMediator: SKIPPING initial refresh")
+        ) {
             InitializeAction.SKIP_INITIAL_REFRESH
         } else {
-            println("PostRemoteMediator: LAUNCHING initial refresh")
             InitializeAction.LAUNCH_INITIAL_REFRESH
         }
     }

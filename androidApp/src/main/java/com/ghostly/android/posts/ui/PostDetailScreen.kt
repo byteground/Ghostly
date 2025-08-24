@@ -1,10 +1,6 @@
 package com.ghostly.android.posts.ui
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.FlowRowOverflow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -19,8 +15,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -39,25 +33,21 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.ghostly.android.Destination
 import com.ghostly.android.R
 import com.ghostly.android.posts.PostDetailViewModel
 import com.ghostly.android.posts.PostsConstants
 import com.ghostly.android.posts.getTimeFromStatus
-import com.ghostly.android.theme.tagColors
+import com.ghostly.android.ui.components.Tags
 import com.ghostly.android.ui.components.Toast
 import com.ghostly.posts.models.Filter
 import com.ghostly.posts.models.Post
-import com.ghostly.posts.models.Tag
 import com.mohamedrejeb.richeditor.model.rememberRichTextState
 import com.mohamedrejeb.richeditor.ui.material3.RichText
 import kotlinx.coroutines.launch
@@ -68,9 +58,10 @@ import java.nio.charset.StandardCharsets
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PostDetailScreen(
-    navController: NavController,
     post: Post,
     viewModel: PostDetailViewModel = koinViewModel(),
+    onBackClick: () -> Unit,
+    onEditClick: (Post) -> Unit,
 ) {
     val updatedPost by viewModel.observePost(post).collectAsState()
 
@@ -80,16 +71,6 @@ fun PostDetailScreen(
     }
 
     val time = remember(updatedPost) { updatedPost?.getTimeFromStatus() }
-
-    println("Yoda: Original Post $post")
-    println("Yoda: Updated Post $updatedPost")
-    
-    // Refresh post data from server when screen becomes active
-    LaunchedEffect(Unit) {
-        scope.launch {
-            viewModel.refreshPostFromServer(post.id)
-        }
-    }
 
     Scaffold(
         topBar = {
@@ -116,9 +97,7 @@ fun PostDetailScreen(
                     }
                 },
                 navigationIcon = {
-                    IconButton(onClick = {
-                        navController.popBackStack()
-                    }) {
+                    IconButton(onClick = onBackClick) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.cd_back)
@@ -126,11 +105,10 @@ fun PostDetailScreen(
                     }
                 },
                 actions = {
-                    // Edit button
                     IconButton(
                         onClick = {
                             updatedPost?.let { post ->
-                                navController.navigate(Destination.EditPost(post))
+                                onEditClick.invoke(post)
                             }
                         }
                     ) {
@@ -139,14 +117,12 @@ fun PostDetailScreen(
                             contentDescription = stringResource(R.string.cd_edit_post)
                         )
                     }
-                    
+
                     if (updatedPost?.status == Filter.Drafts.key) {
                         OutlinedButton(
                             onClick = {
                                 scope.launch {
-                                    updatedPost?.let {
-                                        viewModel.changePostStatus(it, Filter.Published)
-                                    }
+                                    viewModel.changePostStatus(Filter.Published)
                                 }
                             },
                             modifier = Modifier
@@ -163,9 +139,7 @@ fun PostDetailScreen(
                         OutlinedButton(
                             onClick = {
                                 scope.launch {
-                                    updatedPost?.let {
-                                        viewModel.changePostStatus(it, Filter.Drafts)
-                                    }
+                                    viewModel.changePostStatus(Filter.Drafts)
                                 }
                             },
                             modifier = Modifier
@@ -270,45 +244,6 @@ fun PostDetailScreen(
     }
     val toastMessage by viewModel.toastMessage.collectAsState()
     Toast(toastMessage)
-}
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-fun Tags(modifier: Modifier, tags: List<Tag>) {
-
-    FlowRow(
-        modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-        maxLines = 2,
-        overflow = FlowRowOverflow.Visible,
-    ) {
-        tags.forEach { tag ->
-            val tagColor = remember(tag.name) { tagColors.random() }
-            AssistChip(
-                modifier = Modifier
-                    .height(24.dp),
-                onClick = { /*TODO*/ },
-                label = {
-                    Text(
-                        text = tag.name,
-                        style = MaterialTheme.typography.labelMedium,
-                        maxLines = 1
-                    )
-                },
-                shape = MaterialTheme.shapes.large,
-                colors = AssistChipDefaults.assistChipColors(
-                    labelColor = MaterialTheme.colorScheme.onPrimary,
-                    containerColor = tagColor,
-                ),
-                border = AssistChipDefaults.assistChipBorder(
-                    enabled = true,
-                    borderColor = Color.Transparent
-                ),
-                leadingIcon = {},
-            )
-        }
-    }
 }
 
 fun decodeFromNavigation(input: String): String {

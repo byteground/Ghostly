@@ -223,13 +223,7 @@ class ApiServiceImpl(
 
             val token =
                 tryAndGetToken() ?: return@withContext Result.Error(-1, "Unable to generate token")
-            
-            println("ApiService: Sending PUT request to update post $postId")
-            println("ApiService: Request body: ${request.posts.firstOrNull()?.tags?.size} tags")
-            request.posts.firstOrNull()?.tags?.forEach { tag ->
-                println("ApiService: Tag in request: ${tag.name} (id: ${tag.id})")
-            }
-            
+
             val response: HttpResponse =
                 client.put("${loginDetails.domainUrl}/api/admin/posts/${postId}/") {
                     header("Authorization", "Ghost ${token.token}")
@@ -251,7 +245,6 @@ class ApiServiceImpl(
                 }
 
                 else -> {
-                    println("ApiService: Update successful")
                     Result.Success(response.body<UpdatePostResponse>())
                 }
             }

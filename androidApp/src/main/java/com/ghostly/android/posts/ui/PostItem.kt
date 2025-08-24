@@ -129,7 +129,7 @@ fun PostItem(post: Post, showStatus: Boolean, onPostClick: (Post) -> Unit) {
         )
         Spacer(modifier = Modifier.height(8.dp))
         if (post.authors.isNotEmpty()) {
-            val author = post.authors[0]
+            val author = post.authors.first()
             Row(
                 modifier = Modifier
                     .fillMaxWidth()

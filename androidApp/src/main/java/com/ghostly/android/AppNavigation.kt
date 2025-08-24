@@ -54,8 +54,13 @@ fun AppNavigation(
         ) { backStackEntry ->
             val post = backStackEntry.toRoute<Post>()
             PostDetailScreen(
-                navController = navController,
                 post = post,
+                onBackClick = {
+                    navController.popBackStack()
+                },
+                onEditClick = {
+                    navController.navigate(Destination.EditPost(it))
+                }
             )
         }
         composable<Destination.Home> {
@@ -83,8 +88,13 @@ fun AppNavigation(
         ) { backStackEntry ->
             val editPost = backStackEntry.toRoute<Destination.EditPost>()
             EditPostScreen(
-                navController = navController,
-                post = editPost.post
+                post = editPost.post,
+                onEditSuccess = {
+                    navController.navigateUp()
+                },
+                onBackClick = {
+                    navController.navigateUp()
+                }
             )
         }
     }

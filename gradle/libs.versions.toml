@@ -23,7 +23,6 @@ androidxRoom = "2.7.0-alpha05"
 ksp = "2.0.0-1.0.22"
 sqlite = "2.5.0-alpha05"
 cashPaging = "3.3.0-alpha02-0.5.1"
-accompanist = "0.34.0"
 kermit = "2.0.2"
 
 [libraries]
@@ -64,7 +63,6 @@ ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negoti
 ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" }
 androidx-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling", version.ref = "uiTooling" }
 androidx-paging-common-android = { group = "androidx.paging", name = "paging-common-android", version.ref = "pagingCommonAndroid" }
-accompanist-flowlayout = { module = "com.google.accompanist:accompanist-flowlayout", version.ref = "accompanist" }
 kermit = { module = "co.touchlab:kermit", version.ref = "kermit" }
 
 [plugins]

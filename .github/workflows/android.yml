@@ -24,6 +24,8 @@ jobs:
       run: chmod +x gradlew
     - name: Build with Gradle
       run: ./gradlew clean androidApp:assembleDebug
+    - name: Tests
+      run: ./gradlew :androidApp:test
     - name: Upload Build Artifact
       uses: actions/upload-artifact@v4.6.2
       with:

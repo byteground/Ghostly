@@ -5,7 +5,7 @@ import java.util.Locale
 import java.util.regex.Pattern
 
 private val RELAXED_GHOST_DOMAIN = Pattern.compile(
-    "^(?:(?:https?)://)?" +
+    "^(?:https?://)?" +
             "((?!-)[A-Za-z0-9-]{1,63}(?<!-)\\.)+" +
             "[A-Za-z]{2,}(?:/ghost)?/?$"
 )

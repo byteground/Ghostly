@@ -8,12 +8,12 @@ import org.junit.Test
 class StringsTest {
     @Test
     fun `isValidGhostDomain accepts hostname without scheme`() {
-        assertTrue(isValidGhostDomain("blog.example.com"))
+        assertTrue(isValidGhostDomain("blog.example97.com"))
     }
 
     @Test
     fun `isValidGhostDomain accepts https with no ghost path`() {
-        assertTrue(isValidGhostDomain("https://blog.example.com"))
+        assertTrue(isValidGhostDomain("https://blog.example97.net"))
     }
 
     @Test

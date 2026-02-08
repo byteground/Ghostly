@@ -44,6 +44,10 @@ android {
             jvmTarget.set(JvmTarget.JVM_17)
         }
     }
+
+    testOptions {
+        unitTests.isReturnDefaultValues = true
+    }
 }
 
 dependencies {
@@ -68,4 +72,7 @@ dependencies {
     implementation(libs.androidx.paging.compose)
 
     debugImplementation(libs.compose.ui.tooling)
+
+    testImplementation("junit:junit:4.13.2")
+    testImplementation(kotlin("test"))
 }

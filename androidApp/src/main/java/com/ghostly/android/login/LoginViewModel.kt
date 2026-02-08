@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ghostly.android.utils.isValidEmail
 import com.ghostly.android.utils.isValidGhostDomain
+import com.ghostly.android.utils.normalizeGhostDomainInput
 import com.ghostly.datastore.DataStoreConstants
 import com.ghostly.datastore.DataStoreRepository
 import com.ghostly.datastore.LoginDetailsStore
@@ -123,7 +124,9 @@ class LoginViewModel(
     }
 
     suspend fun getSiteDetails() {
-        when (val result = getSiteDetailsUseCase.invoke(domain.value)) {
+        val normalized = normalizeGhostDomainInput(domain.value)
+        _domain.value = normalized
+        when (val result = getSiteDetailsUseCase.invoke(normalized)) {
             is Result.Success -> {
                 result.data?.siteDetails?.title?.let {
                     dataStoreRepository.putString(
